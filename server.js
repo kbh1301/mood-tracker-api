@@ -4,7 +4,7 @@ const cors = require('cors');
 const crypto = require('./modules/crypto');
 const { Pool } = require('pg');
 
-var isDev = environment === 'development';
+var isDev = process.env.NODE_ENV === 'development';
 
 // report any uncaught Errors
 process.on('uncaughtException', (error) => {
