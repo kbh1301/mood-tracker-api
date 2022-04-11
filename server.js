@@ -4,6 +4,8 @@ const cors = require('cors');
 const crypto = require('./modules/crypto');
 const { Pool } = require('pg');
 
+var isDev = environment === 'development';
+
 // report any uncaught Errors
 process.on('uncaughtException', (error) => {
     console.trace('!!!UNCAUGHT ERROR!!!' + error.stack);
@@ -12,7 +14,7 @@ process.on('uncaughtException', (error) => {
 const pool = new Pool({
     max: 20,
     connectionString: db_url,
-    ssl: true
+    ssl: isDev ? false : { rejectUnauthorized: false }
 });
 
 // var used to track database connection
