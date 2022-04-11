@@ -14,7 +14,8 @@ const pool = new Pool({
     host: host,
     user: user,
     password: Buffer.from(password, 'base64').toString('utf8'),
-    database: database,
+    dbname: dbname,
+    connectionString: process.env.DATABASE_URL,
     ssl: true
 });
 
