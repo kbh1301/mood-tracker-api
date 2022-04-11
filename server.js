@@ -1,4 +1,4 @@
-const { port, db_url, ssl } = require('./config');
+const { port, db_url } = require('./config');
 const express = require('express');
 const cors = require('cors');
 const crypto = require('./modules/crypto');
@@ -12,7 +12,7 @@ process.on('uncaughtException', (error) => {
 const pool = new Pool({
     max: 20,
     connectionString: db_url,
-    ssl: ssl || false
+    ssl: true
 });
 
 // var used to track database connection
