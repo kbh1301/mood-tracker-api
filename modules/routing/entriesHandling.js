@@ -10,7 +10,7 @@ module.exports = (app, crypto, dbQuery) => {
             WHERE user_id=${decodedId}
             AND ${month} IN (EXTRACT(MONTH FROM time_am), EXTRACT(MONTH FROM time_pm))
             AND ${year} IN (EXTRACT(YEAR FROM time_am), EXTRACT(YEAR FROM time_pm))
-            ORDER BY time_am, time_pm;
+            ORDER BY COALESCE(time_am, time_pm);
         `;
 
         dbQuery(query, (err, result) => {
