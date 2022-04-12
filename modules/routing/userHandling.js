@@ -3,7 +3,6 @@ module.exports = (app, validateUser, crypto, dbQuery) => {
 
     // if user is Demo during login, check if new demo data is necessary and generate it if so
     const generateDemoData = (id, topDate, bottomDate, res) => {
-        console.log(topDate)
 
         // run db query to check if data is already current for last 90 days
         const topDateQuery = `SELECT EXISTS(SELECT 1 FROM entries WHERE user_id=${id} AND date='${topDate}')`;
