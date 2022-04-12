@@ -5,7 +5,7 @@ module.exports = (app, validateUser, crypto, dbQuery) => {
     const generateDemoData = (id, topDate, bottomDate, res) => {
 
         // run db query to check if data is already current for last 90 days
-        const topDateQuery = `SELECT EXISTS(SELECT 1 FROM entries WHERE user_id=${id} AND date='${topDate}')`;
+        const topDateQuery = `SELECT EXISTS(SELECT 1 FROM entries WHERE user_id=${id} AND '${topDate}' IN (time_am::date, time_pm::date))`;
         dbQuery(topDateQuery, (err, result) => {
             let topDateExists = false;
             if(err) {
@@ -33,10 +33,10 @@ module.exports = (app, validateUser, crypto, dbQuery) => {
                 notes = crypto.encrypt(notes);
 
                 // run db query to generate dummy data for last 90 days
-                const generate_series = `SELECT datetime::timestamp with time zone, datetime::time with time zone, ${ranNum}, ${ranNum}, '${notes}', datetime::time with time zone + interval '12 hours', ${ranNum}, ${ranNum}, '${notes}', '${id}'
+                const generate_series = `SELECT datetime, ${ranNum}, ${ranNum}, '${notes}', datetime + interval '12 hours', ${ranNum}, ${ranNum}, '${notes}', '${id}'
                     FROM generate_series('${bottomDate}'::timestamp with time zone, '${topDate}'::timestamp with time zone, '1 day'::interval) as datetime`;
                 // inserts random data into entries table
-                const generationQuery = `INSERT INTO entries(date, time_am, mood_am, anxiety_am, notes_am, time_pm, mood_pm, anxiety_pm, notes_pm, user_id) ${generate_series}`;
+                const generationQuery = `INSERT INTO entries(time_am, mood_am, anxiety_am, notes_am, time_pm, mood_pm, anxiety_pm, notes_pm, user_id) ${generate_series}`;
 
                 // generates random data and inserts to entries table
                 dbQuery(generationQuery, (err) => {
