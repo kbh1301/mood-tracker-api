@@ -70,6 +70,15 @@ app.listen(process.env.PORT || 3000, () => {
     console.log(`app is running on port ${port || 3000}`)
 });
 
+app.get('/test', (req, res) => {
+    dbQuery(`SELECT * FROM entries WHERE time_am='2022-04-11'`, (err, result) => {
+        if(err) console.log(err)
+        const data = result.rows;
+        console.log(data)
+        res.status(200).json(data);
+    })
+})
+
 // if database not connected, attempt reconnect and send error response to frontend if issue persists
 app.use((req, res, next) => {
     if(!dbConnected){
