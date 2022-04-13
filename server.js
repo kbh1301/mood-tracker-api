@@ -1,4 +1,4 @@
-const { port, db_url } = require('./config');
+const { port, db_url, db_url_dev } = require('./config');
 const express = require('express');
 const cors = require('cors');
 const crypto = require('./modules/crypto');
@@ -13,7 +13,7 @@ process.on('uncaughtException', (error) => {
 
 const pool = new Pool({
     max: 20,
-    connectionString: db_url,
+    connectionString: isDev ? db_url_dev : db_url,
     ssl: isDev ? false : { rejectUnauthorized: false }
 });
 
