@@ -8,8 +8,8 @@ module.exports = (app, crypto, dbQuery) => {
         const query = `
             SELECT * FROM entries
             WHERE user_id=${decodedId}
-            AND ${month} IN (EXTRACT(MONTH FROM time_am), EXTRACT(MONTH FROM time_pm))
-            AND ${year} IN (EXTRACT(YEAR FROM time_am), EXTRACT(YEAR FROM time_pm))
+            AND ${month} IN (EXTRACT(MONTH FROM time_am::date), EXTRACT(MONTH FROM time_pm::date))
+            AND ${year} IN (EXTRACT(YEAR FROM time_am::date), EXTRACT(YEAR FROM time_pm::date))
             ORDER BY COALESCE(time_am, time_pm);
         `;
 
@@ -35,9 +35,9 @@ module.exports = (app, crypto, dbQuery) => {
     };
 
     // query configuration used for updates to a row
-    const updateQuery = ({ am_pm, time, mood, anxiety, notes, decodedId }) => {
+    const updateQuery = ({ _meridiem, time, mood, anxiety, notes, decodedId }) => {
         return {
-            text: `UPDATE entries SET time${am_pm}='${time}', mood${am_pm}=$2, anxiety${am_pm}=$3, notes${am_pm}=$4 WHERE $1::date IN (time_am::date, time_pm::date) AND user_id=$5`,
+            text: `UPDATE entries SET time${_meridiem}='${time}', mood${_meridiem}=$2, anxiety${_meridiem}=$3, notes${_meridiem}=$4 WHERE $1::date IN (time_am::date, time_pm::date) AND user_id=$5`,
             values: [time, mood, anxiety, notes, decodedId]
         }
     };
@@ -45,23 +45,23 @@ module.exports = (app, crypto, dbQuery) => {
     // inserts database entry or updates an existing entry
     app.post('/data', (req, res) => {
         req.body = encryptedBody(req.body);
-        const { am_pm, time, mood, anxiety, notes, decodedId } = req.body;
-        const pm_am = am_pm == '_am' ? '_pm' : '_am';
+        const { _meridiem, time, mood, anxiety, notes, decodedId } = req.body;
+        const _meridiemFlip = _meridiem == '_am' ? '_pm' : '_am';
         const date = time.split('T')[0];
 
         // query used to check if date of submitted datetime exists in db
         const timeExists = (time) => `SELECT EXISTS(SELECT time${time} FROM entries WHERE time${time}::date=$1 AND user_id=$2)`
 
         // insert and update queries
-        const insert = `INSERT INTO entries(time${am_pm}, mood${am_pm}, anxiety${am_pm}, notes${am_pm}, user_id) VALUES($1,$2,$3,$4,$5)`;
+        const insert = `INSERT INTO entries(time${_meridiem}, mood${_meridiem}, anxiety${_meridiem}, notes${_meridiem}, user_id) VALUES($1,$2,$3,$4,$5)`;
         const update = updateQuery(req.body);
 
         // vars for frontend error message
-        const timeString = am_pm == '_am' ? 'DAY' : 'NIGHT';
+        const timeString = _meridiem == '_am' ? 'DAY' : 'NIGHT';
         const errorString = `A ${timeString} entry for ${date} already exists.`;
 
         // query if date of submitted datetime exists in db
-        dbQuery(timeExists(am_pm), [time, decodedId], (err, result) => {
+        dbQuery(timeExists(_meridiem), [time, decodedId], (err, result) => {
             if(err) return console.trace(err);
             // if date of submitted datetime exists, return error
             if(result.rows[0].exists) {
@@ -70,7 +70,7 @@ module.exports = (app, crypto, dbQuery) => {
                 res.status(500).end();
             } else {
                 // query if the date of opposite datetime exists
-                dbQuery(timeExists(pm_am), [time, decodedId], (err, result) => {
+                dbQuery(timeExists(_meridiemFlip), [time, decodedId], (err, result) => {
                     if(err) return console.trace(err);
                     // if date of opposite datetime exists, update
                     if(result.rows[0].exists) {
